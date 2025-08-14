@@ -1,14 +1,19 @@
-import { Component, signal, inject } from '@angular/core';
-import { MoneyBrowserStorage } from '../../services/money-browser-storage';
+import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { FirestoreService } from '../../services/firestore.service';
+import { AuthService } from '../../services/auth.service';
+import { UserProfileComponent } from '../user-profile/user-profile.component';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-home',
-  imports: [],
+  imports: [UserProfileComponent, CommonModule],
   templateUrl: './home.html',
-  styleUrl: './home.scss'
+  styleUrl: './home.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Home {
-  private storage = inject(MoneyBrowserStorage);
+  private storage = inject(FirestoreService);
+  authService = inject(AuthService);
   
   amount = signal(0);
   description = signal('');
@@ -24,6 +29,18 @@ export class Home {
     const target = event.target as HTMLTextAreaElement;
     const value = target.value;
     this.description.set(value);
+  }
+
+  onFormSubmit(event: Event): void {
+    event.preventDefault();
+    this.addExpense();
+  }
+
+  onKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !this.isLoading()) {
+      event.preventDefault();
+      this.addExpense();
+    }
   }
 
   async addExpense(): Promise<void> {
@@ -47,7 +64,7 @@ export class Home {
       this.description.set('');
       
       // Show success message
-      alert('Expense added successfully!');
+      alert('Expense added successfully and saved to cloud!');
       
     } catch (error) {
        console.error('Error saving expense:', error);
