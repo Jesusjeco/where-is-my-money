@@ -1,5 +1,6 @@
 import { Component, signal, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { MoneyBrowserStorage, Expense } from '../../services/money-browser-storage';
+import { FirestoreService } from '../../services/firestore.service';
+import { Expense } from '../../services/money-browser-storage';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -10,7 +11,7 @@ import { CommonModule } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RecentExpensesTable implements OnInit {
-  private storage = inject(MoneyBrowserStorage);
+  private storage = inject(FirestoreService);
   
   expenses = signal<Expense[]>([]);
   isLoading = signal(true);
@@ -20,7 +21,7 @@ export class RecentExpensesTable implements OnInit {
     await this.loadRecentExpenses();
   }
 
-  private async loadRecentExpenses(): Promise<void> {
+  async loadRecentExpenses(): Promise<void> {
     try {
       this.isLoading.set(true);
       this.error.set(null);
@@ -41,13 +42,13 @@ export class RecentExpensesTable implements OnInit {
     }
   }
 
-  async deleteExpense(id: number): Promise<void> {
+  async deleteExpense(id: string | number): Promise<void> {
     if (!confirm('Are you sure you want to delete this expense?')) {
       return;
     }
 
     try {
-      await this.storage.deleteExpense(id);
+      await this.storage.deleteExpense(id.toString());
       // Reload the expenses after deletion
       await this.loadRecentExpenses();
     } catch (err) {
@@ -72,4 +73,6 @@ export class RecentExpensesTable implements OnInit {
       currency: 'USD'
     }).format(amount);
   }
+
+
 }
